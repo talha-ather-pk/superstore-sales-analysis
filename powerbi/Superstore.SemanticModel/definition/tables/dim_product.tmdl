@@ -1,0 +1,65 @@
+table dim_product
+	lineageTag: bad742c5-8c4a-5c58-8456-47df67af681a
+
+	column product_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9e6fb981-58be-5138-bd9d-4bcbb0886945
+		summarizeBy: none
+		sourceColumn: product_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_name
+		dataType: string
+		lineageTag: 3d4fe2a0-d5e0-5c1e-9ffb-065cc3c0d722
+		summarizeBy: none
+		sourceColumn: product_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_category
+		dataType: string
+		lineageTag: cacdf111-bcd3-5cff-b946-7b79daa3785d
+		summarizeBy: none
+		sourceColumn: product_category
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_sub_category
+		dataType: string
+		lineageTag: d4669b56-1f59-5b4d-aadf-854ec1f3f03b
+		summarizeBy: none
+		sourceColumn: product_sub_category
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_container
+		dataType: string
+		lineageTag: 29befa1e-f9ff-5981-aad3-e98f0b50ac0f
+		summarizeBy: none
+		sourceColumn: product_container
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_base_margin
+		dataType: double
+		isHidden
+		lineageTag: b17088f4-0449-541b-a423-6440f90576fc
+		summarizeBy: sum
+		sourceColumn: product_base_margin
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_product = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "dim_product.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"product_key", Int64.Type}, {"product_name", type text}, {"product_category", type text}, {"product_sub_category", type text}, {"product_container", type text}, {"product_base_margin", type number}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

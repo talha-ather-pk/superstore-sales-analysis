@@ -1,0 +1,50 @@
+table dim_geography
+	lineageTag: 91ad019a-6c52-5eb8-80c1-27500f8445d4
+
+	column geo_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6d68a474-edc6-5ed3-a45f-f9b16f31f7d5
+		summarizeBy: none
+		sourceColumn: geo_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column province
+		dataType: string
+		dataCategory: StateOrProvince
+		lineageTag: 05888185-340e-5488-a88b-76c8c97cceb8
+		summarizeBy: none
+		sourceColumn: province
+
+		annotation SummarizationSetBy = Automatic
+
+	column region
+		dataType: string
+		lineageTag: cd4944d2-61b4-584f-86b0-7a0eb70058da
+		summarizeBy: none
+		sourceColumn: region
+
+		annotation SummarizationSetBy = Automatic
+
+	column country
+		dataType: string
+		dataCategory: Country
+		lineageTag: 6b1531e5-9adb-58c5-8e32-c6d2b47123e1
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_geography = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "dim_geography.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"geo_key", Int64.Type}, {"province", type text}, {"region", type text}, {"country", type text}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

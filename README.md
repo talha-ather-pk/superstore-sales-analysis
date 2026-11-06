@@ -6,7 +6,7 @@ An office supplies retailer selling across Canada had four years of order data (
 
 **Live summary page:** https://superstore-sales-analysis-phi.vercel.app (source in [`site/index.html`](site/index.html))
 
-![Furniture is 35% of sales but earns a 2.3% margin](images/chart_category_margin.png)
+![Power BI dashboard: Executive Overview](images/dashboard_overview.png)
 
 ## Key findings
 
@@ -21,9 +21,30 @@ An office supplies retailer selling across Canada had four years of order data (
 | 7 | **2012 sales were 11.6% below 2009**, while order counts held steady around 1,390 a year. | Order values are shrinking, not order volume. |
 | 8 | The top 20% of customers bring in 46% of sales. Corporate is the largest segment (37% of sales). | Revenue is spread widely; no single-customer dependency. |
 
-## Charts
+## Power BI dashboard
 
-Generated with Python (`scripts/make_charts.py`, matplotlib).
+Four pages with synced Year, Region, Segment and Category slicers. Bars are coloured by profit margin with a DAX measure (red = loss, orange = under 8%, blue = healthy).
+
+| Product Profitability | Discounts & Shipping |
+|---|---|
+| ![Product Profitability](images/dashboard_products.png) | ![Discounts & Shipping](images/dashboard_discounts_shipping.png) |
+
+![Customers](images/dashboard_customers.png)
+
+The dashboard is saved as a **Power BI Project** ([`powerbi/Superstore.pbip`](powerbi/Superstore.pbip)): the semantic model is in TMDL and the report in PBIR JSON, so every measure, relationship and visual is plain text that can be reviewed in Git. Both are produced by [`scripts/build_pbip.py`](scripts/build_pbip.py).
+
+| Page | What it shows |
+|---|---|
+| Executive Overview | Sales, profit, margin, orders, AOV; monthly trend; sales by category and province coloured by margin; segment mix |
+| Product Profitability | Profit by sub-category, sales vs margin scatter, category matrix with loss-line % |
+| Discounts & Shipping | Margin by discount band, sales and margin by ship mode, days to ship by priority × ship mode |
+| Customers | Customers ranked by sales, top-20% sales share, sales and customer counts by segment |
+
+## Python charts
+
+Generated with `scripts/make_charts.py` (matplotlib).
+
+![Furniture is 35% of sales but earns a 2.3% margin](images/chart_category_margin.png)
 
 ![Profit by sub-category](images/chart_subcategory_profit.png)
 
@@ -69,24 +90,23 @@ dim_customer ── fact_sales ── dim_product
 - **fact_sales** (8,399 rows): sales, profit, quantity, discount, shipping cost, days to ship, flags
 - **dim_product** (1,263), **dim_customer** (795), **dim_geography** (13 provinces), **dim_date** (2009 to 2012)
 
-## Dashboard pages
-1. **Executive Overview**: sales, profit, margin, orders, YoY trend, map by province
-2. **Product Profitability**: profit by sub-category, sales vs margin scatter, loss analysis
-3. **Discounts & Shipping**: margin by discount band, ship mode cost and speed
-4. **Customers**: top customers, segment mix, concentration
+## DAX
 
-DAX measures are in `powerbi/dax_measures.md` (time intelligence, ranking, conditional formatting).
+22 measures in display folders (core KPIs, time intelligence, profitability, customers, formatting), documented in [`powerbi/dax_measures.md`](powerbi/dax_measures.md). Measure totals were checked against the Python output: sales 14,915,601 · profit 1,521,768 · margin 10.2% · 5,496 orders · 50.8% loss lines.
 
 ## Tools
-Python (pandas, matplotlib) · Power BI · DAX · Power Query · star-schema data modelling
+Python (pandas, matplotlib) · Power BI · DAX · Power Query (M) · TMDL / Power BI Projects (PBIP) · star-schema data modelling
 
 ## How to run
 ```bash
 pip install pandas matplotlib
 python scripts/clean_and_model.py   # clean data + star schema -> data_clean/
 python scripts/make_charts.py       # README charts -> images/
+python scripts/build_pbip.py        # Power BI project -> powerbi/Superstore.pbip
 ```
-Then build the dashboard in Power BI Desktop, or follow `powerbi/build_guide.md` to rebuild it.
+Open `powerbi/Superstore.pbip` in Power BI Desktop (November 2025 release or later; built and tested on the April 2026 release) and click **Refresh**. The CSV folder is the `DataFolder` parameter; `build_pbip.py` sets it to this project's `data_clean/` folder, or change it in **Transform data → Edit parameters**. Use **File → Save as** to get a single `.pbix`.
+
+To build the same dashboard by hand instead, follow [`powerbi/build_guide.md`](powerbi/build_guide.md).
 
 The web summary in `site/` is a single static HTML file. To host it on Vercel, import this repo and set the **Root Directory** to `site`.
 

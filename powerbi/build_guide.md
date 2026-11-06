@@ -1,5 +1,7 @@
 # Power BI build guide
 
+> The finished dashboard is already in `Superstore.pbip` (open it and click Refresh). This guide is for rebuilding it by hand, e.g. to practise or to adapt it to another dataset.
+
 Time needed: about 3 to 4 hours for a first build.
 
 ## 1. Load the data

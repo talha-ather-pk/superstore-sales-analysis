@@ -1,0 +1,16 @@
+relationship 6a2bb10a-ea24-5644-aebe-adbba894b48d
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fact_sales.order_date
+	toColumn: dim_date.date
+
+relationship c4bd5ce8-f2c9-5737-9060-4970ab5663b2
+	fromColumn: fact_sales.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship 6687b24a-1f70-50c5-bccd-c7f4c839674e
+	fromColumn: fact_sales.product_key
+	toColumn: dim_product.product_key
+
+relationship f9f88682-0bca-5dc5-a915-8296605eea73
+	fromColumn: fact_sales.geo_key
+	toColumn: dim_geography.geo_key

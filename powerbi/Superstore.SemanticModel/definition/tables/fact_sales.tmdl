@@ -1,0 +1,312 @@
+table fact_sales
+	lineageTag: a131a322-daa3-5dff-9cc0-66682d027add
+
+	measure 'Total Sales' = SUM ( fact_sales[sales] )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: Core KPIs
+		lineageTag: 7c8ad7f3-c501-5bd1-a797-8b3b49a892fd
+
+	measure 'Total Profit' = SUM ( fact_sales[profit] )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: Core KPIs
+		lineageTag: 1e5a40bb-319c-5a82-ab0d-18a3f9e64b85
+
+	measure 'Profit Margin %' = DIVIDE ( [Total Profit], [Total Sales] )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Core KPIs
+		lineageTag: d8b84f7a-9698-50e2-8839-264c64867b52
+
+	measure Orders = DISTINCTCOUNT ( fact_sales[order_id] )
+		formatString: #,0
+		displayFolder: Core KPIs
+		lineageTag: 0426d3fa-e88a-52c6-a862-9bb32eb1b1be
+
+	measure 'Units Sold' = SUM ( fact_sales[order_quantity] )
+		formatString: #,0
+		displayFolder: Core KPIs
+		lineageTag: 02dadff1-b510-5027-902b-f4294c907820
+
+	measure 'Avg Order Value' = DIVIDE ( [Total Sales], [Orders] )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: Core KPIs
+		lineageTag: 7ed2e7ab-dbd7-558a-882b-dfbf93a754ea
+
+	measure Customers = DISTINCTCOUNT ( fact_sales[customer_key] )
+		formatString: #,0
+		displayFolder: Core KPIs
+		lineageTag: bceaa540-fa32-5cd7-b6d9-de9dbc21b23a
+
+	measure 'Avg Discount %' = AVERAGE ( fact_sales[discount] )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Core KPIs
+		lineageTag: 8f2cd62c-88f2-55a7-a4b0-e861fdcee207
+
+	measure 'Shipping Cost' = SUM ( fact_sales[shipping_cost] )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: Core KPIs
+		lineageTag: cee70f02-68c7-5609-97ae-aa3ce4a128d8
+
+	measure 'Avg Days to Ship' = AVERAGE ( fact_sales[days_to_ship] )
+		formatString: #,0.0
+		displayFolder: Core KPIs
+		lineageTag: bc1e8319-d0d4-5d4f-8c1a-abfac3f66367
+
+	measure 'Sales PY' = CALCULATE ( [Total Sales], SAMEPERIODLASTYEAR ( dim_date[date] ) )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: Time intelligence
+		lineageTag: 0eee9ff5-0434-5592-8fd4-0e8f4878eed2
+
+	measure 'Sales YoY %' = DIVIDE ( [Total Sales] - [Sales PY], [Sales PY] )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Time intelligence
+		lineageTag: c76b878c-ad6a-590a-bc04-532528b772b2
+
+	measure 'Profit PY' = CALCULATE ( [Total Profit], SAMEPERIODLASTYEAR ( dim_date[date] ) )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: Time intelligence
+		lineageTag: d9ca73f0-03eb-5ed8-b83a-3180f9905601
+
+	measure 'Profit YoY %' = DIVIDE ( [Total Profit] - [Profit PY], [Profit PY] )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Time intelligence
+		lineageTag: d9f057b0-3378-5a70-ae93-9465792d2298
+
+	measure 'Sales YTD' = TOTALYTD ( [Total Sales], dim_date[date] )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: Time intelligence
+		lineageTag: 80fa9891-e57d-5f68-b0a8-c772f0e49206
+
+	measure 'Sales Rolling 3M' = CALCULATE ( [Total Sales], DATESINPERIOD ( dim_date[date], MAX ( dim_date[date] ), -3, MONTH ) )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: Time intelligence
+		lineageTag: 5b833340-88c3-5e04-842f-9081f2ec2727
+
+	measure 'Loss Lines' = CALCULATE ( COUNTROWS ( fact_sales ), fact_sales[is_loss] = TRUE () )
+		formatString: #,0
+		displayFolder: Profitability
+		lineageTag: ac00dc07-3b0d-5e59-80a7-3668bd800fea
+
+	measure 'Loss Lines %' = DIVIDE ( [Loss Lines], COUNTROWS ( fact_sales ) )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Profitability
+		lineageTag: 390689fa-9de7-520e-9082-a961e1ea6ef3
+
+	measure 'Loss Amount' = CALCULATE ( [Total Profit], fact_sales[is_loss] = TRUE () )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: Profitability
+		lineageTag: 92272e70-6c7c-5d98-a316-a26177e835db
+
+	measure 'Profit Rank (Sub-Category)' = RANKX ( ALL ( dim_product[product_sub_category] ), [Total Profit], , DESC )
+		formatString: #,0
+		displayFolder: Profitability
+		lineageTag: 3844f9af-a99e-5f38-b2a8-ebd2829b11f5
+
+	measure 'Top 20% Customer Sales Share' = VAR CustomerCount = COUNTROWS ( ALL ( dim_customer ) ) VAR TopCustomers = TOPN ( ROUND ( CustomerCount * 0.2, 0 ), ALL ( dim_customer ), [Total Sales], DESC ) RETURN DIVIDE ( CALCULATE ( [Total Sales], TopCustomers ), CALCULATE ( [Total Sales], ALL ( dim_customer ) ) )
+		formatString: 0.0%;-0.0%;0.0%
+		displayFolder: Customers
+		lineageTag: 83a1875a-9966-503e-919a-63b0106771c9
+
+	measure 'Margin Color' = SWITCH ( TRUE (), [Profit Margin %] < 0, "#C0392B", [Profit Margin %] < 0.08, "#E67E22", "#2563EB" )
+		displayFolder: Formatting
+		lineageTag: 14fa92fb-7183-562f-9b80-833077312c08
+
+	column row_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6a940b2e-2124-5c28-88ba-35cfe780a603
+		summarizeBy: none
+		sourceColumn: row_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_id
+		dataType: int64
+		formatString: 0
+		lineageTag: bb2230fc-a676-5193-b314-e166f57f57c1
+		summarizeBy: none
+		sourceColumn: order_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: e5057fc7-d98f-537c-81fb-a237cc6cf00a
+		summarizeBy: none
+		sourceColumn: order_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column ship_date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 23a8ac7e-dfe6-5c09-ae82-222dff95484d
+		summarizeBy: none
+		sourceColumn: ship_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4e50ff05-258a-5f2d-8c41-9d2f54c47a47
+		summarizeBy: none
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a48df353-653a-591a-8369-dbea8a845add
+		summarizeBy: none
+		sourceColumn: product_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column geo_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a5b89b00-62bf-528a-b5d3-26bd7d483705
+		summarizeBy: none
+		sourceColumn: geo_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_segment
+		dataType: string
+		lineageTag: a4a98d93-d61e-569c-b177-fcc921ec2596
+		summarizeBy: none
+		sourceColumn: customer_segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_priority
+		dataType: string
+		lineageTag: e45f8c5e-d236-505a-a1de-ccf758ff0141
+		summarizeBy: none
+		sourceColumn: order_priority
+
+		annotation SummarizationSetBy = Automatic
+
+	column ship_mode
+		dataType: string
+		lineageTag: 60e942c9-cfc4-5682-90e8-0ef8f47db890
+		summarizeBy: none
+		sourceColumn: ship_mode
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_quantity
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 64e03b2c-b742-56ea-a486-d1f698488b7a
+		summarizeBy: none
+		sourceColumn: order_quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column unit_price
+		dataType: double
+		isHidden
+		lineageTag: 402a7431-85cc-5f4b-87d4-2a323ec7f3d9
+		summarizeBy: sum
+		sourceColumn: unit_price
+
+		annotation SummarizationSetBy = Automatic
+
+	column discount
+		dataType: double
+		isHidden
+		lineageTag: d546f38c-5ae9-5006-a6aa-444d53a1198a
+		summarizeBy: sum
+		sourceColumn: discount
+
+		annotation SummarizationSetBy = Automatic
+
+	column sales
+		dataType: double
+		isHidden
+		lineageTag: 83dc3d72-f6f5-5fe3-9bba-757d6ee9a4e6
+		summarizeBy: sum
+		sourceColumn: sales
+
+		annotation SummarizationSetBy = Automatic
+
+	column profit
+		dataType: double
+		isHidden
+		lineageTag: a631206c-b402-55b7-8a74-1d31ce8e0dc3
+		summarizeBy: sum
+		sourceColumn: profit
+
+		annotation SummarizationSetBy = Automatic
+
+	column shipping_cost
+		dataType: double
+		isHidden
+		lineageTag: 4074ba0d-491d-55e1-808d-708647958e0c
+		summarizeBy: sum
+		sourceColumn: shipping_cost
+
+		annotation SummarizationSetBy = Automatic
+
+	column days_to_ship
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c5bd6953-0ec1-5194-9878-d5a083096c9e
+		summarizeBy: none
+		sourceColumn: days_to_ship
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_loss
+		dataType: boolean
+		lineageTag: 8f43e69d-a20d-5fba-8d60-e2edc620e761
+		summarizeBy: none
+		sourceColumn: is_loss
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_large_order
+		dataType: boolean
+		lineageTag: 6e438dcc-5ea7-5384-8dc8-c734c2ca2b9d
+		summarizeBy: none
+		sourceColumn: is_large_order
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Discount Band' = SWITCH ( TRUE (), fact_sales[discount] <= 0.03, "0-3%", fact_sales[discount] <= 0.06, "4-6%", fact_sales[discount] <= 0.09, "7-9%", "10%+" )
+		dataType: string
+		sortByColumn: 'Discount Band Order'
+		lineageTag: afab083e-5455-5d35-8a08-6bf7e33cb90c
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Discount Band Order' = SWITCH ( TRUE (), fact_sales[discount] <= 0.03, 1, fact_sales[discount] <= 0.06, 2, fact_sales[discount] <= 0.09, 3, 4 )
+		dataType: int64
+		isHidden
+		lineageTag: 67a87a9d-3a57-5e38-a824-2d3bfe4e558f
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_sales = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "fact_sales.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"row_id", Int64.Type}, {"order_id", Int64.Type}, {"order_date", type date}, {"ship_date", type date}, {"customer_key", Int64.Type}, {"product_key", Int64.Type}, {"geo_key", Int64.Type}, {"customer_segment", type text}, {"order_priority", type text}, {"ship_mode", type text}, {"order_quantity", Int64.Type}, {"unit_price", type number}, {"discount", type number}, {"sales", type number}, {"profit", type number}, {"shipping_cost", type number}, {"days_to_ship", Int64.Type}}, "en-US"),
+				    Logicals = Table.TransformColumns(Typed, {{"is_loss", each _ = "True", type logical}, {"is_large_order", each _ = "True", type logical}})
+				in
+				    Logicals
+
+	annotation PBI_ResultType = Table
