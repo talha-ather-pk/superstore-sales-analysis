@@ -8,6 +8,6 @@
 - [ ] Build the dashboard in Power BI Desktop and save it as `powerbi/superstore_sales_dashboard.pbix`
 - [x] Check the totals table at the bottom of `dax_measures.md` (Sales 14,915,601 · Profit 1,521,768 · Margin 10.2% · Orders 5,496)
 - [ ] Screenshot each page and the model view into `images/`, then link them in README.md
-- [ ] Push to GitHub
-- [ ] Deploy to Vercel: import the repo, Root Directory = `site`
-- [ ] Put the Vercel link in README.md
+- [x] Push to GitHub: https://github.com/talha-ather-pk/superstore-sales-analysis
+- [x] Deploy to Vercel (CLI, from `site/`): https://superstore-sales-analysis-phi.vercel.app
+- [x] Put the Vercel link in README.md

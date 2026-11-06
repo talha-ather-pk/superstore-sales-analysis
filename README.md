@@ -4,7 +4,7 @@
 
 An office supplies retailer selling across Canada had four years of order data (2009 to 2012, 8,399 order lines, $14.9M in sales) and a simple question: where is the money actually being made, and where is it being lost?
 
-**Live summary page:** _add your Vercel link here_ (source in [`site/index.html`](site/index.html))
+**Live summary page:** https://superstore-sales-analysis-phi.vercel.app (source in [`site/index.html`](site/index.html))
 
 ![Furniture is 35% of sales but earns a 2.3% margin](images/chart_category_margin.png)
 
