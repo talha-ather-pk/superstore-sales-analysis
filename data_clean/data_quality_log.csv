@@ -1,0 +1,16 @@
+check,rows_affected,action
+rows loaded,8399,none
+misspelled/legacy values in province,995,"renamed {'Saskachewan': 'Saskatchewan', 'Newfoundland': 'Newfoundland and Labrador'}"
+misspelled/legacy values in region,1706,renamed {'Prarie': 'Prairie'}
+unparseable order_date,0,checked (none expected)
+unparseable ship_date,0,checked (none expected)
+ship date before order date,0,"flagged, days_to_ship set to null"
+exact duplicate lines (ignoring row_id),0,dropped
+missing product_base_margin,63,filled with median margin of the same sub-category
+negative sales,0,checked (none expected)
+discount outside 0-100%,0,checked
+loss-making order lines (profit < 0),4264,"kept (real business losses), flagged with is_loss"
+"large orders (sales > 6,408, 3xIQR)",582,"kept, flagged with is_large_order"
+customers appearing under more than one segment,176,"segment kept on the fact table (segment at time of order), not on dim_customer"
+order IDs shared by more than one customer,21,kept; order counts use DISTINCTCOUNT(order_id) and are noted as approximate
+products with varying container/base margin,26,dim_product uses the most common value per product

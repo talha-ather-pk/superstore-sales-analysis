@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Superstore Sales Analysis</title>
+<meta name="description" content="Retail sales and profitability analysis: Python data cleaning, star-schema model and Power BI dashboard. By Talha Ather.">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f5f2; --surface:#fcfcfb; --border:#e4e2dc; --grid:#ecebe6;
+  --text:#0b0b0b; --text-2:#52514e; --muted:#7a7974;
+  --pos:#2a78d6; --neg:#d03b3b; --accent:#2a78d6; --mid:#c9c7c0;
+  --tip-bg:#0b0b0b; --tip-text:#fcfcfb;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121211; --surface:#1a1a19; --border:#2e2e2b; --grid:#262624;
+    --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8e86;
+    --pos:#3987e5; --neg:#e66767; --accent:#5598e7; --mid:#4a4a46;
+    --tip-bg:#f0efec; --tip-text:#121211;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121211; --surface:#1a1a19; --border:#2e2e2b; --grid:#262624;
+  --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8e86;
+  --pos:#3987e5; --neg:#e66767; --accent:#5598e7; --mid:#4a4a46;
+  --tip-bg:#f0efec; --tip-text:#121211;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 16px 64px}
+header .eyebrow{font-size:13px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin:0 0 8px}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.15;margin:0 0 12px;letter-spacing:-.01em}
+.lede{color:var(--text-2);max-width:720px;margin:0 0 20px;font-size:16px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 32px;padding:0;list-style:none}
+.tags li{font-size:12.5px;color:var(--text-2);border:1px solid var(--border);border-radius:999px;padding:3px 10px;background:var(--surface)}
+h2{font-size:20px;margin:48px 0 6px;letter-spacing:-.005em}
+.sub{color:var(--text-2);margin:0 0 16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kpi .l{font-size:12.5px;color:var(--muted)}
+.kpi .v{font-size:26px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.kpi .n{font-size:12.5px;color:var(--text-2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:800px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 18px 12px;min-width:0}
+.card h3{font-size:15px;margin:0 0 2px}
+.card .cap{font-size:13px;color:var(--text-2);margin:0 0 10px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;overflow:visible}
+.chart text{fill:var(--text-2);font-size:11.5px;font-variant-numeric:tabular-nums}
+.chart .lbl{fill:var(--text)}
+details{margin-top:8px;font-size:13px;color:var(--text-2)}
+summary{cursor:pointer;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--muted);font-weight:500}
+td.num,th.num{text-align:right}
+.findings{counter-reset:f;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px;padding:0;list-style:none;margin:0}
+.findings li{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px 14px 48px;position:relative;counter-increment:f}
+.findings li::before{content:counter(f);position:absolute;left:16px;top:14px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--surface);font-size:12px;font-weight:600;display:grid;place-items:center}
+.findings b{display:block;margin-bottom:2px}
+.findings span{color:var(--text-2);font-size:14px}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 10px}
+ol.recs{padding-left:20px;margin:0;color:var(--text-2)} ol.recs li{margin:6px 0} ol.recs b{color:var(--text)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 4px}
+.flow span{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13.5px}
+.flow i{color:var(--muted);font-style:normal}
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+footer a,a{color:var(--accent)}
+#tip{position:fixed;pointer-events:none;background:var(--tip-bg);color:var(--tip-text);font-size:12.5px;line-height:1.45;padding:7px 10px;border-radius:6px;opacity:0;transition:opacity .08s;z-index:10;max-width:240px;font-variant-numeric:tabular-nums}
+#tip b{font-weight:600}
+.hit{fill:transparent;cursor:default}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="eyebrow">Portfolio project · Retail analytics</p>
+  <h1>Where a $14.9M retailer makes and loses money</h1>
+  <p class="lede">Four years of order data from an office supplies retailer (Superstore sample, Canada, 2009 to 2012), cleaned in Python, modelled as a star schema and analysed in Power BI. This page summarises what the data shows.</p>
+  <ul class="tags"><li>Python · pandas</li><li>Power BI</li><li>DAX</li><li>Star-schema modelling</li><li>Data cleaning</li></ul>
+</header>
+
+<section aria-labelledby="kpi-h">
+  <h2 id="kpi-h" style="margin-top:0">At a glance</h2>
+  <div class="kpis" id="kpis"></div>
+</section>
+
+<section aria-labelledby="find-h">
+  <h2 id="find-h">Key findings</h2>
+  <p class="sub">The four findings a manager would act on first.</p>
+  <ol class="findings">
+    <li><b>Furniture: 35% of sales, 2.3% margin</b><span>Technology earns 14.8% and Office Supplies 13.8%. A third of revenue brings in under 8% of profit.</span></li>
+    <li><b>Tables and Bookcases sell at a loss</b><span>Tables lose $99K and Bookcases $34K, despite being the 2nd and 8th largest sub-categories by sales.</span></li>
+    <li><b>Margin falls as discounts rise</b><span>13.4% margin at 0 to 3% discount, 6.4% at 10% or more.</span></li>
+    <li><b>Express shipping isn't faster</b><span>Express Air ships in 2.0 days on average, the same as Regular Air.</span></li>
+  </ol>
+</section>
+
+<section aria-labelledby="trend-h">
+  <h2 id="trend-h">Sales trend</h2>
+  <p class="sub">Order counts held steady near 1,390 a year, but 2012 sales finished 11.6% below 2009.</p>
+  <div class="card">
+    <h3>Monthly sales</h3><p class="cap">January 2009 to December 2012</p>
+    <div class="chart" id="c-trend"></div>
+    <details><summary>View data</summary><div id="t-trend"></div></details>
+  </div>
+</section>
+
+<section aria-labelledby="prod-h">
+  <h2 id="prod-h">Product profitability</h2>
+  <p class="sub">Profit by sub-category. Red bars lose money.</p>
+  <div class="card">
+    <h3>Total profit by sub-category</h3><p class="cap">2009 to 2012, CAD</p>
+    <div class="chart" id="c-sub"></div>
+    <details><summary>View data</summary><div id="t-sub"></div></details>
+  </div>
+</section>
+
+<section aria-labelledby="disc-h">
+  <h2 id="disc-h">Discounts and shipping</h2>
+  <p class="sub">Two levers that quietly erode margin.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Profit margin by discount level</h3><p class="cap">Share of sales profit kept at each discount band</p>
+      <div class="chart" id="c-disc"></div>
+      <details><summary>View data</summary><div id="t-disc"></div></details>
+    </div>
+    <div class="card">
+      <h3>Profit margin by ship mode</h3><p class="cap">Average days to ship shown beside each bar</p>
+      <div class="chart" id="c-ship"></div>
+      <details><summary>View data</summary><div id="t-ship"></div></details>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="cat-h">
+  <h2 id="cat-h">By category and region</h2>
+  <div class="grid2">
+    <div class="tablewrap"><table id="t-cat"></table></div>
+    <div class="tablewrap"><table id="t-reg"></table></div>
+  </div>
+</section>
+
+<section aria-labelledby="rec-h">
+  <h2 id="rec-h">Recommendations</h2>
+  <ol class="recs">
+    <li><b>Reprice or limit discounts on Tables and Bookcases.</b> They turn the most revenue into losses.</li>
+    <li><b>Require approval for discounts of 10% or more,</b> where margin is less than half the low-discount level.</li>
+    <li><b>Review the Express Air premium.</b> It delivers no faster than Regular Air.</li>
+    <li><b>Investigate falling order values.</b> Order counts are flat, so the sales decline comes from smaller orders.</li>
+  </ol>
+</section>
+
+<section aria-labelledby="meth-h">
+  <h2 id="meth-h">How it was built</h2>
+  <div class="flow"><span>Raw CSV · 8,399 rows</span><i>→</i><span>Python cleaning &amp; checks</span><i>→</i><span>Star schema · 1 fact + 4 dimensions</span><i>→</i><span>Power BI · DAX measures</span><i>→</i><span>4-page dashboard</span></div>
+  <p class="sub" style="margin-top:14px">Data quality checks run by the cleaning script:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Check</th><th class="num">Affected</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>Misspelled or outdated province/region names</td><td class="num">1,788 rows</td><td>Corrected to official names</td></tr>
+      <tr><td>Missing product base margin</td><td class="num">63 rows</td><td>Filled with sub-category median</td></tr>
+      <tr><td>Customers listed under several segments</td><td class="num">176 customers</td><td>Segment kept at order level</td></tr>
+      <tr><td>Products with inconsistent attributes</td><td class="num">26 products</td><td>Most common value used</td></tr>
+      <tr><td>Very large orders (3×IQR)</td><td class="num">582 rows</td><td>Kept and flagged</td></tr>
+      <tr><td>Duplicates, bad dates, negative sales</td><td class="num">0</td><td>Checked</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>
+  <span>Built by <b>Talha Ather</b>, Data Analyst · Power BI, Python, SQL</span>
+  <span>Data: Tableau “Superstore Sales” sample (fictional retailer)</span>
+</footer>
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+const D = {"kpi": {"sales": 14915600.824, "profit": 1521767.98, "margin": 0.102, "orders": 5496, "lines": 8399, "loss_pct": 0.5077, "loss_amt": -1102503.01}, "monthly": [{"m": "2009-01", "s": 516303}, {"m": "2009-02", "s": 332481}, {"m": "2009-03", "s": 411629}, {"m": "2009-04", "s": 393276}, {"m": "2009-05", "s": 230146}, {"m": "2009-06", "s": 263456}, {"m": "2009-07", "s": 380504}, {"m": "2009-08", "s": 329755}, {"m": "2009-09", "s": 325292}, {"m": "2009-10", "s": 361555}, {"m": "2009-11", "s": 248933}, {"m": "2009-12", "s": 415809}, {"m": "2010-01", "s": 336527}, {"m": "2010-02", "s": 271581}, {"m": "2010-03", "s": 217808}, {"m": "2010-04", "s": 266969}, {"m": "2010-05", "s": 283534}, {"m": "2010-06", "s": 293081}, {"m": "2010-07", "s": 229885}, {"m": "2010-08", "s": 207937}, {"m": "2010-09", "s": 418343}, {"m": "2010-10", "s": 365252}, {"m": "2010-11", "s": 290670}, {"m": "2010-12", "s": 368094}, {"m": "2011-01", "s": 251467}, {"m": "2011-02", "s": 299890}, {"m": "2011-03", "s": 296036}, {"m": "2011-04", "s": 288213}, {"m": "2011-05", "s": 262628}, {"m": "2011-06", "s": 197741}, {"m": "2011-07", "s": 287905}, {"m": "2011-08", "s": 274578}, {"m": "2011-09", "s": 276050}, {"m": "2011-10", "s": 305660}, {"m": "2011-11", "s": 367769}, {"m": "2011-12", "s": 328877}, {"m": "2012-01", "s": 340627}, {"m": "2012-02", "s": 276132}, {"m": "2012-03", "s": 348208}, {"m": "2012-04", "s": 268025}, {"m": "2012-05", "s": 384588}, {"m": "2012-06", "s": 276581}, {"m": "2012-07", "s": 242810}, {"m": "2012-08", "s": 302745}, {"m": "2012-09", "s": 318272}, {"m": "2012-10", "s": 351247}, {"m": "2012-11", "s": 256020}, {"m": "2012-12", "s": 354709}], "yearly": [{"y": 2009, "s": 4209139, "p": 434539}, {"y": 2010, "s": 3549681, "p": 363871}, {"y": 2011, "s": 3436817, "p": 381456}, {"y": 2012, "s": 3719964, "p": 341902}], "category": [{"n": "Technology", "s": 5984248, "p": 886314, "mg": 0.1481}, {"n": "Furniture", "s": 5178591, "p": 117433, "mg": 0.0227}, {"n": "Office Supplies", "s": 3752762, "p": 518021, "mg": 0.138}], "subcat": [{"n": "Telephones and Communication", "s": 1889314, "p": 316952, "mg": 0.1678}, {"n": "Office Machines", "s": 2168697, "p": 307713, "mg": 0.1419}, {"n": "Binders and Binder Accessories", "s": 1022958, "p": 307413, "mg": 0.3005}, {"n": "Copiers and Fax", "s": 1130361, "p": 167361, "mg": 0.1481}, {"n": "Chairs & Chairmats", "s": 1761837, "p": 149650, "mg": 0.0849}, {"n": "Office Furnishings", "s": 698094, "p": 100428, "mg": 0.1439}, {"n": "Appliances", "s": 736992, "p": 97158, "mg": 0.1318}, {"n": "Computer Peripherals", "s": 795876, "p": 94287, "mg": 0.1185}, {"n": "Envelopes", "s": 174086, "p": 48183, "mg": 0.2768}, {"n": "Paper", "s": 446453, "p": 45263, "mg": 0.1014}, {"n": "Labels", "s": 38982, "p": 13677, "mg": 0.3509}, {"n": "Pens & Art Supplies", "s": 167107, "p": 7565, "mg": 0.0453}, {"n": "Storage & Organization", "s": 1070183, "p": 6664, "mg": 0.0062}, {"n": "Rubber Bands", "s": 15007, "p": -103, "mg": -0.0068}, {"n": "Scissors, Rulers and Trimmers", "s": 80996, "p": -7799, "mg": -0.0963}, {"n": "Bookcases", "s": 822652, "p": -33582, "mg": -0.0408}, {"n": "Tables", "s": 1896008, "p": -99062, "mg": -0.0522}], "discount": [{"n": "0\u20133%", "s": 5679323, "mg": 0.1337, "l": 3106}, {"n": "4\u20136%", "s": 4050805, "mg": 0.0844, "l": 2290}, {"n": "7\u20139%", "s": 4038512, "mg": 0.0858, "l": 2253}, {"n": "10%+", "s": 1146961, "mg": 0.0645, "l": 750}], "ship": [{"n": "Regular Air", "s": 7506303, "mg": 0.1472, "d": 2.04}, {"n": "Delivery Truck", "s": 6224879, "mg": 0.0433, "d": 2.04}, {"n": "Express Air", "s": 1184419, "mg": 0.1245, "d": 2.0}], "region": [{"n": "West", "s": 3597549, "p": 297009, "mg": 0.0826}, {"n": "Ontario", "s": 3063212, "p": 346869, "mg": 0.1132}, {"n": "Prairie", "s": 2837305, "p": 321160, "mg": 0.1132}, {"n": "Atlantic", "s": 2014248, "p": 238961, "mg": 0.1186}, {"n": "Quebec", "s": 1510195, "p": 140427, "mg": 0.093}, {"n": "Yukon", "s": 975867, "p": 73849, "mg": 0.0757}, {"n": "Northwest Territories", "s": 800847, "p": 100653, "mg": 0.1257}, {"n": "Nunavut", "s": 116376, "p": 2841, "mg": 0.0244}]};
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const fmtM = v => (v<0?"−":"") + "$" + (Math.abs(v)/1e6).toFixed(Math.abs(v)>=1e7?1:2) + "M";
+const fmtK = v => Math.abs(v)<1000 ? (v<0?"−":"")+"$"+Math.round(Math.abs(v)) : (v<0?"−":"") + "$" + Math.round(Math.abs(v)/1e3).toLocaleString() + "K";
+const fmt$ = v => (v<0?"−":"") + "$" + Math.round(Math.abs(v)).toLocaleString();
+const pct = (v,d=1) => (v<0?"−":"") + (Math.abs(v)*100).toFixed(d) + "%";
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const mLabel = s => MON[+s.slice(5)-1] + " " + s.slice(0,4);
+
+function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(parent) parent.appendChild(e); return e; }
+function svg(container, w, h){ const s=el("svg",{viewBox:`0 0 ${w} ${h}`,width:w,height:h,role:"img"}); $(container).appendChild(s); return s; }
+const cw = id => Math.max(280, $(id).clientWidth);
+const tip = $("tip");
+function showTip(html, ev){ tip.innerHTML=html; tip.style.opacity=1; const x=ev.clientX, y=ev.clientY, r=tip.getBoundingClientRect(); let L=x+14, T=y-r.height-10; if(L+r.width>innerWidth-8) L=x-r.width-14; if(T<8) T=y+16; tip.style.left=L+"px"; tip.style.top=T+"px"; }
+function hideTip(){ tip.style.opacity=0; }
+function table(id, head, rows, numCols){ const t=$(id).tagName==="TABLE"?$(id):$(id).appendChild(document.createElement("table"));
+  t.innerHTML = "<thead><tr>"+head.map((h,i)=>`<th class="${numCols.includes(i)?'num':''}">${h}</th>`).join("")+"</tr></thead><tbody>"+
+  rows.map(r=>"<tr>"+r.map((c,i)=>`<td class="${numCols.includes(i)?'num':''}">${c}</td>`).join("")+"</tr>").join("")+"</tbody>"; }
+// rounded-end bar path: flat at baseline, 4px radius at the data end
+function barPath(x0,x1,y,h,horizontal){ const r=Math.min(4,Math.abs(x1-x0)/2,h/2);
+  if(horizontal){ const dir=x1>=x0?1:-1; const xe=x1, xb=x0;
+    return `M${xb},${y} L${xe-dir*r},${y} Q${xe},${y} ${xe},${y+r} L${xe},${y+h-r} Q${xe},${y+h} ${xe-dir*r},${y+h} L${xb},${y+h} Z`; }
+  // vertical: x0 = baseline y, x1 = top y, y = left x, h = width
+  const yb=x0, yt=x1, xl=y, w=h; return `M${xl},${yb} L${xl},${yt+r} Q${xl},${yt} ${xl+r},${yt} L${xl+w-r},${yt} Q${xl+w},${yt} ${xl+w},${yt+r} L${xl+w},${yb} Z`; }
+
+// KPIs
+const K=D.kpi;
+$("kpis").innerHTML = [
+  ["Total sales", fmtM(K.sales), "2009 to 2012"],
+  ["Total profit", fmtM(K.profit), "after all costs"],
+  ["Profit margin", pct(K.margin), "profit ÷ sales"],
+  ["Orders", K.orders.toLocaleString(), K.lines.toLocaleString()+" order lines"],
+  ["Loss-making lines", pct(K.loss_pct), fmtM(K.loss_amt)+" in losses"],
+].map(([l,v,n])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="n">${n}</div></div>`).join("");
+
+function render(){
+["c-trend","c-sub","c-disc","c-ship"].forEach(id=>$(id).innerHTML="");
+// Trend: single-series line with crosshair
+(function(){
+  const data=D.monthly, W=cw("c-trend"), H=Math.round(Math.min(320,Math.max(220,W*0.32))), m={t:16,r:16,b:30,l:56};
+  const s=svg("c-trend",W,H); s.setAttribute("aria-label","Monthly sales line chart, January 2009 to December 2012");
+  const max=Math.ceil(Math.max(...data.map(d=>d.s))/1e5)*1e5;
+  const x=i=>m.l+i*(W-m.l-m.r)/(data.length-1), y=v=>H-m.b-v/max*(H-m.t-m.b);
+  for(let v=0; v<=max; v+=max/4){ el("line",{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:"var(--grid)","stroke-width":1},s);
+    const t=el("text",{x:m.l-8,y:y(v)+4,"text-anchor":"end"},s); t.textContent="$"+Math.round(v/1e3)+"K"; }
+  data.forEach((d,i)=>{ if(d.m.endsWith("-01")){ const t=el("text",{x:x(i),y:H-8,"text-anchor":"start"},s); t.textContent=d.m.slice(0,4);
+    if(i>0) el("line",{x1:x(i),x2:x(i),y1:m.t,y2:H-m.b,stroke:"var(--grid)","stroke-width":1},s);} });
+  el("path",{d:data.map((d,i)=>(i?"L":"M")+x(i)+","+y(d.s)).join(" "),fill:"none",stroke:"var(--pos)","stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"},s);
+  const cross=el("line",{y1:m.t,y2:H-m.b,stroke:"var(--muted)","stroke-width":1,"stroke-dasharray":"3 3",opacity:0},s);
+  const dot=el("circle",{r:5,fill:"var(--pos)",stroke:"var(--surface)","stroke-width":2,opacity:0},s);
+  const hit=el("rect",{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,class:"hit"},s);
+  function move(ev){ const pt=s.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; const p=pt.matrixTransform(s.getScreenCTM().inverse());
+    const i=Math.max(0,Math.min(data.length-1,Math.round((p.x-m.l)/((W-m.l-m.r)/(data.length-1))))); const d=data[i];
+    cross.setAttribute("x1",x(i)); cross.setAttribute("x2",x(i)); cross.setAttribute("opacity",1);
+    dot.setAttribute("cx",x(i)); dot.setAttribute("cy",y(d.s)); dot.setAttribute("opacity",1);
+    showTip(`<b>${mLabel(d.m)}</b><br>Sales ${fmt$(d.s)}`,ev); }
+  hit.addEventListener("pointermove",move); hit.addEventListener("pointerleave",()=>{cross.setAttribute("opacity",0);dot.setAttribute("opacity",0);hideTip();});
+  if(!$("t-trend").firstChild) table("t-trend",["Year","Sales","Profit","Margin"],D.yearly.map(d=>[d.y,fmt$(d.s),fmt$(d.p),pct(d.p/d.s)]),[1,2,3]);
+})();
+
+// Horizontal diverging bars
+function hbars(id, data, valKey, labelFmt, tipFmt, opts={}){
+  const W=cw(id), rowH=opts.rowH||26, labW=Math.min(opts.labW||210, Math.round(W*0.38)), m={t:6,r:opts.r||64,b:6,l:labW};
+  const H=m.t+m.b+data.length*rowH; const s=svg(id,W,H);
+  const vals=data.map(d=>d[valKey]); const lo=Math.min(0,...vals), hi=Math.max(0,...vals);
+  const x=v=>m.l+(v-lo)/(hi-lo)*(W-m.l-m.r); const x0=x(0);
+  data.forEach((d,i)=>{ const y=m.t+i*rowH, v=d[valKey], h=rowH-8;
+    const maxC=Math.floor((m.l-14)/6.4); const t=el("text",{x:m.l-10,y:y+rowH/2+4,"text-anchor":"end",class:"lbl"},s); t.textContent=d.n.length>maxC? d.n.slice(0,maxC-1).trimEnd()+"…" : d.n;
+    el("path",{d:barPath(x0,x(v),y+4,h,true),fill:v<0?"var(--neg)":"var(--pos)"},s);
+    const vt=el("text",{x:v<0?x0+6:x(v)+6,y:y+rowH/2+4,"text-anchor":"start"},s); vt.textContent=labelFmt(d);
+    const hit=el("rect",{x:m.l,y:y,width:W-m.l-m.r+m.r,height:rowH,class:"hit"},s);
+    hit.addEventListener("pointermove",ev=>showTip(tipFmt(d),ev)); hit.addEventListener("pointerleave",hideTip); });
+  el("line",{x1:x0,x2:x0,y1:0,y2:H,stroke:"var(--mid)","stroke-width":1},s);
+}
+hbars("c-sub", D.subcat, "p", d=>fmtK(d.p), d=>`<b>${d.n}</b><br>Profit ${fmt$(d.p)}<br>Sales ${fmt$(d.s)}<br>Margin ${pct(d.mg)}`, {labW:220,r:70});
+if(!$("t-sub").firstChild) table("t-sub",["Sub-category","Sales","Profit","Margin"],D.subcat.map(d=>[d.n,fmt$(d.s),fmt$(d.p),pct(d.mg)]),[1,2,3]);
+
+// Discount: vertical bars of margin
+(function(){
+  const data=D.discount, W=cw("c-disc"), H=260, m={t:24,r:10,b:34,l:44}; const s=svg("c-disc",W,H);
+  s.setAttribute("aria-label","Profit margin by discount band");
+  const max=0.15, y=v=>H-m.b-v/max*(H-m.t-m.b); const bw=(W-m.l-m.r)/data.length;
+  for(let v=0; v<=max+1e-9; v+=0.05){ el("line",{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:"var(--grid)"},s); const t=el("text",{x:m.l-8,y:y(v)+4,"text-anchor":"end"},s); t.textContent=Math.round(v*100)+"%"; }
+  data.forEach((d,i)=>{ const xl=m.l+i*bw+bw*0.2, w=bw*0.6;
+    el("path",{d:barPath(y(0),y(d.mg),xl,w,false),fill:"var(--pos)"},s);
+    const vt=el("text",{x:xl+w/2,y:y(d.mg)-7,"text-anchor":"middle",class:"lbl"},s); vt.textContent=pct(d.mg);
+    const lt=el("text",{x:xl+w/2,y:H-12,"text-anchor":"middle"},s); lt.textContent=d.n;
+    const hit=el("rect",{x:m.l+i*bw,y:m.t,width:bw,height:H-m.t-m.b,class:"hit"},s);
+    hit.addEventListener("pointermove",ev=>showTip(`<b>${d.n} discount</b><br>Margin ${pct(d.mg)}<br>Sales ${fmt$(d.s)}<br>${d.l.toLocaleString()} order lines`,ev)); hit.addEventListener("pointerleave",hideTip); });
+  if(!$("t-disc").firstChild) table("t-disc",["Discount","Sales","Margin","Lines"],data.map(d=>[d.n,fmt$(d.s),pct(d.mg),d.l.toLocaleString()]),[1,2,3]);
+})();
+
+// Ship mode: horizontal margin bars with days label
+hbars("c-ship", D.ship, "mg", d=>pct(d.mg)+" · "+d.d.toFixed(1)+" days", d=>`<b>${d.n}</b><br>Margin ${pct(d.mg)}<br>Sales ${fmt$(d.s)} (${pct(d.s/K.sales,0)} of total)<br>Avg ${d.d.toFixed(2)} days to ship`, {rowH:52,labW:110,r:120});
+if(!$("t-ship").firstChild) table("t-ship",["Ship mode","Sales","Margin","Avg days"],D.ship.map(d=>[d.n,fmt$(d.s),pct(d.mg),d.d.toFixed(2)]),[1,2,3]);
+
+}
+render();
+let rt; addEventListener("resize",()=>{clearTimeout(rt); rt=setTimeout(render,120);});
+table("t-cat",["Category","Sales","Share","Margin"],D.category.map(d=>[d.n,fmtM(d.s),pct(d.s/K.sales,0),pct(d.mg)]),[1,2,3]);
+table("t-reg",["Region","Sales","Profit","Margin"],D.region.map(d=>[d.n,fmtM(d.s),fmtK(d.p),pct(d.mg)]),[1,2,3]);
+</script>
+</body>
+</html>
